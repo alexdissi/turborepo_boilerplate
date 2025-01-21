@@ -9,6 +9,14 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 export class UserService {
     constructor(private readonly userRepository: UserRepository) { }
 
+    private async findUserOrThrow(userId: string) {
+        const user = await this.userRepository.findUserById(userId);
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+        return user;
+    }
+
     async getUsers(paginationDto: PaginationDto) {
         const { page, limit } = paginationDto;
         const users = await this.userRepository.findAll(page, limit);
@@ -44,11 +52,16 @@ export class UserService {
     async changePassword(userId: string, data: ChangePasswordDto) {
         const { currentPassword, newPassword, passwordVerification } = data;
 
+        if (!currentPassword || !newPassword || !passwordVerification) {
+            throw new HttpException('All fields are required', HttpStatus.BAD_REQUEST);
+        }
+
+
         if (newPassword !== passwordVerification) {
             throw new HttpException('Passwords do not match', HttpStatus.BAD_REQUEST);
         }
 
-        const user = await this.userRepository.findUserById(userId);
+        const user = await this.findUserOrThrow(userId);
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
@@ -67,4 +80,21 @@ export class UserService {
             message: 'Password updated successfully',
         };
     }
+
+    async deleteUser(userId: string) {
+        const user = await this.findUserOrThrow(userId);
+        if (!user) {
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+
+        await this.userRepository.deleteUser(userId);
+
+        return {
+            status: HttpStatus.OK,
+            message: 'User deleted successfully',
+        };
+    }
+
+
+
 }

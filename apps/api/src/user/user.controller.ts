@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Patch, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Patch, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from '@nestjs/passport';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -66,4 +66,17 @@ export class UserController {
     return this.userService.changePassword(userId, data);
   }
 
+  @Delete(':id')
+  async deleteUser(@Req() req: RequestWithUser, @Param("id") id: string) {
+    if (!req.user || !req.user.userId) {
+      throw new Error("The user is not authenticated");
+    }
+
+    const userId = req.user.userId;
+    if (userId !== id) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.userService.deleteUser(userId);
+  }
 }

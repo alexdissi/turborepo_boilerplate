@@ -17,19 +17,19 @@ export class MailerService {
   async sendCreatedAccountEmail({
     recipient,
     firstName,
+    lastName,
   }: {
     recipient: string;
     firstName: string;
+    lastName: string;
   }) {
     try {
-      const data = await this.mailer.sendMail({
-        from: 'Alexandre <contact@alexandredissi.fr>',
+      await this.mailer.sendMail({
+        from: 'BoilerPlate Contact <contact@boilerplate.com>',
         to: [recipient],
         subject: 'Bienvenue sur la plateforme',
-        html: `Bonjour ${firstName}, et bienvenue sur NestJS Chat ! Nous sommes <strong>heureux</strong> de vous avoir parmi nous.`,
+        html: `Bonjour ${firstName} ${lastName}, et bienvenue sur NestJS Chat ! Nous sommes <strong>heureux</strong> de vous avoir parmi nous.`,
       });
-
-      console.log(data);
     } catch (error) {
       console.error(error);
     }
@@ -38,19 +38,21 @@ export class MailerService {
   async sendRequestedPasswordEmail({
     recipient,
     firstName,
+    lastName,
     token,
   }: {
     recipient: string;
     firstName: string;
+    lastName: string;
     token: string;
   }) {
     try {
       const link = `${process.env.APP_URL}/auth/reset-password/${token}`;
       const data = await this.mailer.sendMail({
-        from: 'Acme <onboarding@resend.dev>',
+        from: 'BoilerPlate Contact <contact@boilerplate.com>',
         to: [recipient],
         subject: 'Pour réinitialiser votre mot de passe ...',
-        html: `Bonjour ${firstName}, voici votre lien de réinitialisation de mot de passe : ${link}`,
+        html: `Bonjour ${firstName} ${lastName}, voici votre lien de réinitialisation de mot de passe : ${link}`,
       });
 
       console.log(data);

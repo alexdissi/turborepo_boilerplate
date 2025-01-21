@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
@@ -38,9 +38,16 @@ export class UserRepository {
   }
 
   async updateUser(userId: string, data: any) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
     await this.userRepository.update(userId, data);
     return this.userRepository.findOne({ where: { id: userId } });
   }
+
 
   async findUsersByName(name: string, page: number, limit: number) {
     return this.userRepository.find({
@@ -119,8 +126,9 @@ export class UserRepository {
 
   async updateUserInfos(userId: string, data: UpdateInfosDto): Promise<User> {
     const user = await this.findUserById(userId);
+
     if (!user) {
-      throw new Error('Utilisateur non trouvé');
+      throw new HttpException('Utilisateur non trouvé', HttpStatus.NOT_FOUND);
     }
 
     user.email = data.email;
@@ -130,5 +138,10 @@ export class UserRepository {
     user.is2faEnabled = data.is2faEnabled;
 
     return this.userRepository.save(user);
+  }
+
+  async deleteUser(userId: string) {
+    await this.userRepository.delete(userId);
+    return { status: 200, message: 'Utilisateur supprimé avec succès' };
   }
 }

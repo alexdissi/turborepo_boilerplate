@@ -64,6 +64,7 @@ export class AuthService {
 
     await this.mailerService.sendCreatedAccountEmail({
       firstName: firstName,
+      lastName: lastName,
       recipient: email,
     });
 
@@ -103,6 +104,7 @@ export class AuthService {
 
     await this.mailerService.sendRequestedPasswordEmail({
       firstName: user.firstName,
+      lastName: user.lastName,
       recipient: user.email,
       token: resetToken,
     });
