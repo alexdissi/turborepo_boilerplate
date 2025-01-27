@@ -10,6 +10,7 @@ import * as qrcode from 'qrcode';
 import { hash, verify } from 'argon2';
 import { UserRepository } from 'src/user/user.repository';
 import { JwtPayload } from './jwt.strategy';
+import { StripeService } from 'src/stripe/stripe.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly stripeService: StripeService,
   ) { }
 
   async login({ authBody }: { authBody: LoginUserDto }) {
@@ -52,6 +54,8 @@ export class AuthService {
       throw new HttpException('User already exists.', HttpStatus.BAD_REQUEST);
     }
 
+    const stripeCustomer = await this.stripeService.createStripeCustomer(email, firstName, lastName);
+
     const hashedPassword = await this.hashPassword(password);
 
     const createdUser = await this.userRepository.createUser({
@@ -60,7 +64,10 @@ export class AuthService {
       firstName,
       lastName,
       profilePictureUrl,
+      stripeCustomerId: stripeCustomer.id,
     });
+
+    await this.stripeService.updateStripeCustomer(stripeCustomer.id, createdUser.id);
 
     await this.mailerService.sendCreatedAccountEmail({
       firstName: firstName,
@@ -151,7 +158,7 @@ export class AuthService {
 
   private authenticateUser(payload: JwtPayload) {
     return {
-      access_token: this.jwtService.sign(payload),
+      token: this.jwtService.sign(payload),
     };
   }
 

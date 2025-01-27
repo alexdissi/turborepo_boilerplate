@@ -11,7 +11,7 @@ enum Status {
     SUSPENDED = 'SUSPENDED',
 }
 
-enum UserPlan {
+export enum UserPlan {
     FREE = 'FREE',
     PAID = 'PAID',
     PREMIUM = 'PREMIUM',

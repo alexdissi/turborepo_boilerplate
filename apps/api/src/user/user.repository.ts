@@ -1,7 +1,7 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
+import { User, UserPlan } from './user.entity';
 import { UpdateInfosDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -33,6 +33,7 @@ export class UserRepository {
         'status',
         'twoFactorSecret',
         'is2faEnabled',
+        'stripeCustomerId'
       ],
     });
   }
@@ -72,6 +73,7 @@ export class UserRepository {
     firstName: string;
     lastName: string;
     profilePictureUrl: string;
+    stripeCustomerId: string;
   }) {
     const user = this.userRepository.create({
       ...data,
@@ -144,4 +146,17 @@ export class UserRepository {
     await this.userRepository.delete(userId);
     return { status: 200, message: 'Utilisateur supprimé avec succès' };
   }
+
+  async upgradePlan(stripeCustomerId: string, newPlan: UserPlan): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { stripeCustomerId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.stripeUserPlan = newPlan;
+
+    await this.userRepository.save(user);
+  }
+
 }
