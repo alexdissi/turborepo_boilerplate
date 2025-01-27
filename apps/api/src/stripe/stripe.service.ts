@@ -49,7 +49,7 @@ export class StripeService {
             const user = await this.userRepository.findUserById(userId);
             const session = await this.stripe.checkout.sessions.create({
                 customer: user.stripeCustomerId,
-                payment_method_types: ['card'],
+                payment_method_types: ['card', "revolut_pay"],
                 mode: 'subscription',
                 metadata: { plan: "Business" },
                 line_items: [{ price: planId, quantity: 1 }],

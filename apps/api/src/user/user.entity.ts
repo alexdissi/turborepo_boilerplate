@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 enum UserRole {
     ADMIN = 'ADMIN',
@@ -23,12 +23,15 @@ export class User {
     id: string;
 
     @Column({ unique: true })
+    @Index()
     email: string;
 
     @Column()
+    @Index()
     firstName: string;
 
     @Column()
+    @Index()
     lastName: string;
 
     @Column()
@@ -59,7 +62,7 @@ export class User {
     stripeCustomerId?: string;
 
     @Column({ type: 'enum', enum: UserPlan, default: UserPlan.FREE })
-    stripeUserPlan: UserPlan;
+    userPlan: UserPlan;
 
     @Column({ nullable: true, type: 'timestamp' })
     accountLockedUntil?: Date;

@@ -154,7 +154,7 @@ export class UserRepository {
       throw new NotFoundException('User not found');
     }
 
-    user.stripeUserPlan = newPlan;
+    user.userPlan = newPlan;
 
     await this.userRepository.save(user);
   }
