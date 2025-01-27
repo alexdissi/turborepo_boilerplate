@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post, RawBodyRequest, Req, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, RawBodyRequest, Req, Request, UseGuards } from '@nestjs/common';
 import { StripeService } from './stripe.service';
 import { CreateCheckoutSessionDto } from './dto/stripe-checkout.dto';
 import { AuthGuard } from '@nestjs/passport';
