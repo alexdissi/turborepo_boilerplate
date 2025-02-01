@@ -99,6 +99,7 @@ export class UserRepository {
     await this.userRepository.update(userId, {
       password: hashedPassword,
       isResettingPassword: false,
+      resetPasswordToken: null,
       dateResetPassword: new Date(),
     });
     return this.userRepository.findOne({ where: { id: userId } });

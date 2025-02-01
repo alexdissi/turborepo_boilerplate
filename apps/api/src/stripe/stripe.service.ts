@@ -11,7 +11,7 @@ export class StripeService {
     constructor(private readonly configService: ConfigService, private readonly userRepository: UserRepository) {
         const secretKey = process.env.STRIPE_SECRET_KEY;
         if (!secretKey) throw new Error('Stripe secret key is not defined in configuration');
-        this.stripe = new Stripe(secretKey, { apiVersion: '2025-01-27.acacia' });
+        this.stripe = new Stripe(secretKey, { apiVersion: '2024-12-18.acacia' });
     }
 
     async createStripeCustomer(email: string, firstName: string, lastName: string): Promise<Stripe.Customer> {
