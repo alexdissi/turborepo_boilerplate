@@ -13,8 +13,8 @@ enum Status {
 
 export enum UserPlan {
     FREE = 'FREE',
-    PAID = 'PAID',
-    PREMIUM = 'PREMIUM',
+    PRO = 'PRO',
+    BUSINESS = 'BUSINESS',
 }
 
 @Entity()

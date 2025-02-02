@@ -36,15 +36,20 @@ export class StripeService {
         }
     }
 
-    private getSuccessUrl(): string {
-        return `${process.env.APP_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
-    }
+    async createCheckoutSession(plan: string, userId: string): Promise<{ url: string }> {
+        let planId: string
 
-    private getCancelUrl(): string {
-        return `${process.env.APP_URL}/cancel`;
-    }
+        switch (plan) {
+            case 'pro':
+                planId = process.env.STRIPE_PRO_PLAN_ID;
+                break;
+            case 'business':
+                planId = process.env.STRIPE_BUSINESS_PLAN_ID;
+                break;
+            default:
+                throw new BadRequestException('Invalid plan ID');
+        }
 
-    async createCheckoutSession(planId: string, userId: string): Promise<{ url: string }> {
         try {
             const user = await this.userRepository.findUserById(userId);
             const session = await this.stripe.checkout.sessions.create({
@@ -53,9 +58,10 @@ export class StripeService {
                 mode: 'subscription',
                 metadata: { plan: "Business" },
                 line_items: [{ price: planId, quantity: 1 }],
-                success_url: this.getSuccessUrl(),
-                cancel_url: this.getCancelUrl(),
+                success_url: `${process.env.APP_URL}/payment?status=success&session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.APP_URL}/payment?status=cancel`,
             });
+
             return { url: session.url };
         } catch (error) {
             throw new InternalServerErrorException('Could not create Stripe Checkout session');
@@ -82,20 +88,7 @@ export class StripeService {
             if (!endpointSecret) throw new Error('The endpoint secret is not defined');
 
             const event = this.stripe.webhooks.constructEvent(request.rawBody, sig, endpointSecret);
-
-            switch (event.type) {
-                case 'checkout.session.completed':
-                    break;
-                case 'customer.subscription.deleted':
-                    await this.downgradeUserToFreePlan(event);
-                    break;
-                case 'invoice.paid':
-                case 'invoice.payment_succeeded':
-                    await this.upgradeUserToPaidPlan(event);
-                    break;
-                default:
-                    throw new BadRequestException('Unhandled event type');
-            }
+            await this.handleStripeEvent(event);
 
             return { error: HttpStatus.OK, message: 'Webhook handled successfully' };
         } catch (err) {
@@ -103,15 +96,46 @@ export class StripeService {
         }
     }
 
-    private async upgradeUserToPaidPlan(event: Stripe.Event) {
+    private async handleStripeEvent(event: Stripe.Event) {
         const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.customer as string;
-        await this.userRepository.upgradePlan(userId, UserPlan.PAID);
+        const subscriptionId = session.subscription as string;
+        let planId: string | undefined;
+
+        if (subscriptionId) {
+            const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+            planId = subscription.items.data[0]?.plan.id;
+        }
+
+        switch (event.type) {
+            case 'checkout.session.completed':
+                break;
+            case 'customer.subscription.deleted':
+                await this.handlePlanChange(session, UserPlan.FREE);
+                break;
+            case 'invoice.paid':
+            case 'invoice.payment_succeeded':
+                await this.processPlanUpgrade(session, planId);
+                break;
+            default:
+                throw new BadRequestException('Unhandled event type');
+        }
     }
 
-    private async downgradeUserToFreePlan(event: Stripe.Event) {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const userId = session.customer as string;
-        await this.userRepository.upgradePlan(userId, UserPlan.FREE);
+    private async processPlanUpgrade(session: Stripe.Checkout.Session, planId?: string) {
+        switch (planId) {
+            case process.env.STRIPE_PRO_PLAN_ID:
+                await this.handlePlanChange(session, UserPlan.PRO);
+                break;
+            case process.env.STRIPE_BUSINESS_PLAN_ID:
+                await this.handlePlanChange(session, UserPlan.BUSINESS);
+                break;
+            default:
+                throw new BadRequestException('Unhandled plan ID');
+        }
     }
-}
+
+    private async handlePlanChange(session: Stripe.Checkout.Session, plan: UserPlan) {
+        const userId = session.customer as string;
+        await this.userRepository.upgradePlan(userId, plan);
+    }
+}    

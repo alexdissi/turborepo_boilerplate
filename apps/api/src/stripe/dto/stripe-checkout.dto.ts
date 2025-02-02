@@ -1,9 +1,10 @@
-import { IsNotEmpty, IsString, Matches, Length } from 'class-validator';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class CreateCheckoutSessionDto {
     @IsString()
     @IsNotEmpty()
-    @Length(10, 50)
-    @Matches(/^price_[a-zA-Z0-9]+$/, { message: 'Invalid planId format' })
-    planId: string;
+    @Matches(/^(pro|business)$/, {
+        message: 'Plan must be either "pro" or "business"',
+    })
+    plan: string;
 }

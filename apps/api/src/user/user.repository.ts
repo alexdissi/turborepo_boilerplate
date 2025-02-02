@@ -30,6 +30,7 @@ export class UserRepository {
         'email',
         'profilePictureUrl',
         'role',
+        'userPlan',
         'status',
         'twoFactorSecret',
         'is2faEnabled',

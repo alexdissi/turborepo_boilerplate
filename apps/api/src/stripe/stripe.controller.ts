@@ -14,9 +14,9 @@ export class StripeController {
     @Req() authRequest: RequestWithUser,
     @Body() createCheckoutSession: CreateCheckoutSessionDto,
   ) {
-    const { planId } = createCheckoutSession;
+    const { plan } = createCheckoutSession;
     const userId = authRequest.user.userId;
-    return this.stripeService.createCheckoutSession(planId, userId);
+    return this.stripeService.createCheckoutSession(plan, userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
